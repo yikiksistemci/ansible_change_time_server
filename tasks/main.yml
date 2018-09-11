@@ -1,0 +1,57 @@
+---
+- name: replace ntp.conf
+  replace:
+    dest:    /etc/ntp.conf
+    regexp:  "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  with_items:
+    - { regexp: 'server *', replace: '#' }
+  when: (ansible_distribution == "CentOS") and (ansible_distribution_major_version == "6")
+
+- name: replace chrony.conf
+  replace:
+    dest: /etc/chrony.conf
+    regexp:  "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  with_items:
+    - { regexp: 'server *', replace: '#' }
+  when: (ansible_distribution=="CentOS") and(ansible_distribution_major_version=="7")
+
+
+- name: add lines ntp.conf
+  lineinfile:
+    dest: /etc/ntp.conf
+    line: '{{ item }}'
+  with_items:
+    - 'server 0.tr.pool.ntp.org '
+    - 'server 1.tr.pool.ntp.org'
+    - 'server 0.europe.pool.ntp.org'
+    - 'server 0.north-america.pool.ntp.org'
+  when: (ansible_distribution == "CentOS") and (ansible_distribution_major_version == "6")
+
+
+- name: add lines chrony.conf
+  lineinfile:
+    dest: /etc/chrony.conf
+    line: '{{item}}'
+  with_items:
+    - 'server 0.tr.pool.ntp.org '
+    - 'server 1.tr.pool.ntp.org'
+    - 'server 0.europe.pool.ntp.org'
+    - 'server 0.north-america.pool.ntp.org'
+  when: (ansible_distribution=="CentOS") and(ansible_distribution_major_version=="7")
+
+
+
+- name: Restart chronyd
+  systemd:
+    name: chronyd
+    state: restarted
+  when: (ansible_distribution=="CentOS") and(ansible_distribution_major_version=="7")
+
+
+- name: Restart ntpd
+  service:
+    name: ntpd
+    state: restarted
+  when: (ansible_distribution == "CentOS") and (ansible_distribution_major_version == "6")
